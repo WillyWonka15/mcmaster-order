@@ -1,8 +1,4 @@
 #!/usr/bin/env python3
-"""
-McMaster-Carr Order Tool — Cloud hosted on Render.com
-"""
-
 from flask import Flask, request, jsonify, send_from_directory
 import gspread
 from google.oauth2.service_account import Credentials
@@ -23,28 +19,33 @@ SCOPES = [
 ]
 
 def get_sheet_data():
-    # On Render, credentials come from an environment variable (not a file)
     creds_json = os.environ.get("GOOGLE_CREDENTIALS")
     if creds_json:
         creds_dict = json.loads(creds_json)
         creds = Credentials.from_service_account_info(creds_dict, scopes=SCOPES)
     else:
-        # Fallback to local file for development
         creds = Credentials.from_service_account_file("credentials.json", scopes=SCOPES)
 
-    client  = gspread.authorize(creds)
-    sheet   = client.open(SHEET_NAME).sheet1
-    records = sheet.get_all_records()
+    client     = gspread.authorize(creds)
+    workbook   = client.open(SHEET_NAME)
+    all_sheets = workbook.worksheets()
 
     lookup = {}
-    for row in records:
-        dv   = str(row.get(COL_DV,   "")).strip().upper()
-        mc   = str(row.get(COL_MC,   "")).strip()
-        pack = row.get(COL_PACK, 1)
-        try:    pack = int(pack)
-        except: pack = 1
-        if dv and mc:
-            lookup[dv] = {"mcmaster_part": mc, "pack_size": pack}
+    for sheet in all_sheets:
+        try:
+            records = sheet.get_all_records()
+        except Exception:
+            continue  # skip tabs that can't be read
+        for row in records:
+            dv   = str(row.get(COL_DV,   "")).strip().upper()
+            mc   = str(row.get(COL_MC,   "")).strip()
+            pack = row.get(COL_PACK, 1)
+            try:    pack = int(pack)
+            except: pack = 1
+            # First tab to define a DV number wins — duplicates are ignored
+            if dv and mc and dv not in lookup:
+                lookup[dv] = {"mcmaster_part": mc, "pack_size": pack}
+
     return lookup
 
 
