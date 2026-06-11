@@ -1,20 +1,16 @@
 // Background service worker
-// Opens McMaster orders page and fills in parts
+// Opens McMaster orders page and fills in parts using bulk paste mode
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.type !== "OPEN_AND_FILL") return;
 
   const items = message.items;
 
-  // Open McMaster orders page
   chrome.tabs.create({ url: "https://www.mcmaster.com/orders/" }, (tab) => {
-    // Wait for the page to load then inject the filler
     const checkReady = setInterval(() => {
       chrome.tabs.get(tab.id, (t) => {
         if (t.status === "complete") {
           clearInterval(checkReady);
-
-          // Small extra delay for JS to render the input fields
           setTimeout(() => {
             chrome.scripting.executeScript({
               target: { tabId: tab.id },
@@ -31,43 +27,41 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
 // This function runs inside the McMaster tab
 async function fillOrder(items) {
-  async function sleep(ms) {
+  function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
   }
 
-  async function fillField(selector, value) {
-    const el = document.querySelector(selector);
-    if (!el) throw new Error(`Field not found: ${selector}`);
-    el.focus();
-    el.value = value;
-    el.dispatchEvent(new Event("input",  { bubbles: true }));
-    el.dispatchEvent(new Event("change", { bubbles: true }));
+  // Build the bulk paste text: "PARTNUMBER QUANTITY" per line
+  const bulkText = items.map(item => `${item.mcmaster_part} ${item.packs_to_order}`).join("\n");
+
+  // Click "Paste part numbers and quantities" to switch mode
+  const switchBtn = document.querySelector("button.switch-mode-link");
+  if (!switchBtn) {
+    console.warn("McMaster filler: could not find switch mode button");
+    return;
   }
+  switchBtn.click();
+  await sleep(800);
 
-  for (let i = 0; i < items.length; i++) {
-    const item = items[i];
-
-    try {
-      // Fill part number
-      await fillField("#new-line-part-number-input-1", item.mcmaster_part);
-      await sleep(300);
-
-      // Fill quantity
-      await fillField("#new-line-quantity-input-1", String(item.packs_to_order));
-      await sleep(300);
-
-      // Click Add button
-      const addBtn = document.querySelector("button.button-add-all-lines");
-      if (!addBtn) throw new Error("Add button not found");
-      addBtn.click();
-
-      // Wait for the line to register before adding the next part
-      await sleep(2000);
-
-    } catch (e) {
-      console.warn(`McMaster filler: failed on ${item.dv_number} — ${e.message}`);
-    }
+  // Find the textarea and fill it
+  const textarea = document.querySelector("#bulk-lines-textarea");
+  if (!textarea) {
+    console.warn("McMaster filler: could not find bulk textarea");
+    return;
   }
+  textarea.focus();
+  textarea.value = bulkText;
+  textarea.dispatchEvent(new Event("input",  { bubbles: true }));
+  textarea.dispatchEvent(new Event("change", { bubbles: true }));
+  await sleep(300);
 
-  console.log("McMaster filler: all parts added.");
+  // Click the Add button
+  const addBtn = document.querySelector("button.button-add-all-lines");
+  if (!addBtn) {
+    console.warn("McMaster filler: could not find Add button");
+    return;
+  }
+  addBtn.click();
+
+  console.log("McMaster filler: all parts submitted.");
 }
