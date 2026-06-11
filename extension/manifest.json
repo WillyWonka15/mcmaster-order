@@ -1,1 +1,23 @@
-
+{
+  "manifest_version": 3,
+  "name": "McMaster Order Filler",
+  "version": "1.0",
+  "description": "Auto-fills McMaster order page from the internal order tool",
+  "permissions": ["tabs", "scripting"],
+  "host_permissions": [
+    "https://www.mcmaster.com/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["*://*/*"],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "action": {
+    "default_title": "McMaster Order Filler"
+  }
+}
