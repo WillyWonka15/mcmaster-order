@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>McMaster Order</title>
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Barlow:wght@400;600;700&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --bg: #0f1012; --surface: #1a1c1f; --border: #2e3035;
+      --accent: #e8a020; --accent-dim: #7a5210;
+      --text: #d4d6d9; --text-muted: #6b6f75;
+      --red: #e05555; --green: #4caf7a;
+      --mono: 'Share Tech Mono', monospace;
+      --sans: 'Barlow', sans-serif;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--bg); color: var(--text); font-family: var(--sans); min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 40px 20px 60px; }
+    header { width: 100%; max-width: 700px; margin-bottom: 36px; border-bottom: 2px solid var(--accent); padding-bottom: 16px; display: flex; align-items: flex-end; gap: 16px; }
+    .logo-label { font-family: var(--mono); font-size: 10px; letter-spacing: 3px; color: var(--accent); text-transform: uppercase; margin-bottom: 2px; }
+    h1 { font-size: 28px; font-weight: 700; letter-spacing: -0.5px; line-height: 1; }
+    .subtitle { font-family: var(--mono); font-size: 11px; color: var(--text-muted); margin-left: auto; text-align: right; line-height: 1.6; }
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; width: 100%; max-width: 700px; padding: 28px; margin-bottom: 16px; }
+    .section-label { font-family: var(--mono); font-size: 10px; letter-spacing: 3px; color: var(--accent); text-transform: uppercase; margin-bottom: 16px; }
+    .row-header { display: grid; grid-template-columns: 1fr 120px 40px; gap: 10px; margin-bottom: 8px; }
+    .col-label { font-family: var(--mono); font-size: 10px; letter-spacing: 2px; color: var(--text-muted); text-transform: uppercase; }
+    .item-row { display: grid; grid-template-columns: 1fr 120px 40px; gap: 10px; margin-bottom: 8px; align-items: center; }
+    input[type="text"], input[type="number"] { background: var(--bg); border: 1px solid var(--border); border-radius: 3px; color: var(--text); font-family: var(--mono); font-size: 14px; padding: 10px 12px; width: 100%; transition: border-color 0.15s; outline: none; -moz-appearance: textfield; }
+    input[type="number"]::-webkit-inner-spin-button, input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; }
+    input:focus { border-color: var(--accent); }
+    input::placeholder { color: var(--text-muted); }
+    .btn-remove { background: none; border: 1px solid var(--border); border-radius: 3px; color: var(--text-muted); font-size: 16px; cursor: pointer; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; transition: border-color 0.15s, color 0.15s; }
+    .btn-remove:hover { border-color: var(--red); color: var(--red); }
+    .btn-add { background: none; border: 1px dashed var(--border); border-radius: 3px; color: var(--text-muted); font-family: var(--mono); font-size: 12px; letter-spacing: 1px; cursor: pointer; padding: 10px; width: 100%; margin-top: 8px; transition: border-color 0.15s, color 0.15s; }
+    .btn-add:hover { border-color: var(--accent); color: var(--accent); }
+    .divider { border: none; border-top: 1px solid var(--border); margin: 16px 0; }
+    .actions { display: flex; gap: 12px; }
+    .btn-primary { background: var(--accent); border: none; border-radius: 3px; color: #000; font-family: var(--sans); font-weight: 700; font-size: 14px; letter-spacing: 1px; text-transform: uppercase; cursor: pointer; padding: 13px 28px; flex: 1; transition: opacity 0.15s; }
+    .btn-primary:hover { opacity: 0.85; }
+    .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
+    .btn-secondary { background: none; border: 1px solid var(--border); border-radius: 3px; color: var(--text-muted); font-family: var(--sans); font-size: 13px; cursor: pointer; padding: 13px 20px; transition: border-color 0.15s, color 0.15s; }
+    .btn-secondary:hover { border-color: var(--text-muted); color: var(--text); }
+    .spinner { display: none; width: 16px; height: 16px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.7s linear infinite; margin: 14px auto 0; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .error-block { background: rgba(224,85,85,0.08); border: 1px solid var(--red); border-radius: 3px; padding: 12px 16px; margin-top: 14px; display: none; }
+    .error-title { font-family: var(--mono); font-size: 10px; letter-spacing: 2px; color: var(--red); text-transform: uppercase; margin-bottom: 8px; }
+    .error-line { font-family: var(--mono); font-size: 12px; color: var(--red); margin-bottom: 4px; }
+    #results { width: 100%; max-width: 700px; display: none; }
+    .result-item { background: var(--surface); border: 1px solid var(--border); border-left: 3px solid var(--accent); border-radius: 4px; padding: 14px 18px; margin-bottom: 10px; }
+    .result-dv { font-family: var(--mono); font-size: 15px; color: var(--text); }
+    .result-detail { font-family: var(--mono); font-size: 11px; color: var(--text-muted); margin-top: 4px; line-height: 1.7; }
+    .result-detail span { color: var(--text); }
+    .tag { font-family: var(--mono); font-size: 10px; border-radius: 2px; padding: 1px 6px; margin-left: 6px; }
+    .tag-rounded { background: rgba(232,160,32,0.12); color: var(--accent); border: 1px solid var(--accent-dim); }
+    .btn-send { background: var(--accent); border: none; border-radius: 3px; color: #000; font-family: var(--sans); font-weight: 700; font-size: 13px; letter-spacing: 1px; text-transform: uppercase; cursor: pointer; padding: 12px 24px; width: 100%; margin-bottom: 12px; transition: opacity 0.15s; }
+    .btn-send:hover { opacity: 0.85; }
+    .notice { font-family: var(--mono); font-size: 11px; color: var(--text-muted); text-align: center; margin-bottom: 14px; line-height: 1.8; }
+    .notice a { color: var(--accent); text-decoration: none; }
+    .notice a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+<header>
+  <div>
+    <div class="logo-label">Robotic Solution</div>
+    <h1>McMaster Order</h1>
+  </div>
+  <div class="subtitle">DV lookup · Auto cart<br/>Cloud hosted</div>
+</header>
+
+<div class="card">
+  <div class="section-label">Parts List</div>
+  <div class="row-header">
+    <span class="col-label">DV Number</span>
+    <span class="col-label">Qty Needed</span>
+    <span></span>
+  </div>
+  <div id="items-container"></div>
+  <button class="btn-add" onclick="addRow()">+ Add Part</button>
+  <hr class="divider"/>
+  <div class="actions">
+    <button class="btn-primary" id="submit-btn" onclick="submitLookup()">Look Up Parts</button>
+    <button class="btn-secondary" onclick="clearAll()">Clear</button>
+  </div>
+  <div class="spinner" id="spinner"></div>
+  <div class="error-block" id="error-block">
+    <div class="error-title">Errors</div>
+    <div id="error-lines"></div>
+  </div>
+</div>
+
+<div id="results">
+  <div class="card">
+    <div class="section-label">Order Summary</div>
+    <p class="notice">
+      Install the <a href="https://github.com/YOUR_REPO/releases" target="_blank">McMaster Chrome Extension</a> once,
+      then click the button below to auto-fill McMaster's order page in your browser.
+    </p>
+    <button class="btn-send" onclick="sendToExtension()">Send to McMaster →</button>
+    <div id="links-list"></div>
+  </div>
+</div>
+
+<script>
+  let rowCount = 0;
+  let resolvedItems = [];
+
+  function addRow(dv="", qty="") {
+    rowCount++;
+    const id = rowCount;
+    const container = document.getElementById("items-container");
+    const row = document.createElement("div");
+    row.className = "item-row";
+    row.id = `row-${id}`;
+    row.innerHTML = `
+      <input type="text" placeholder="e.g. DV12488" value="${dv}" id="dv-${id}" onkeydown="handleEnter(event,${id})"/>
+      <input type="number" placeholder="100" value="${qty}" min="1" id="qty-${id}" onkeydown="handleEnter(event,${id})"/>
+      <button class="btn-remove" onclick="removeRow(${id})">×</button>
+    `;
+    container.appendChild(row);
+    setTimeout(() => document.getElementById(`dv-${id}`).focus(), 50);
+  }
+
+  function removeRow(id) { document.getElementById(`row-${id}`)?.remove(); }
+
+  function clearAll() {
+    document.getElementById("items-container").innerHTML = "";
+    document.getElementById("results").style.display = "none";
+    document.getElementById("error-block").style.display = "none";
+    rowCount = 0; resolvedItems = [];
+    addRow();
+  }
+
+  function handleEnter(e, id) {
+    if (e.key === "Enter" && e.target.id.startsWith("qty-")) addRow();
+  }
+
+  function getItems() {
+    const rows = document.querySelectorAll(".item-row");
+    const items = [];
+    rows.forEach(row => {
+      const id  = row.id.replace("row-", "");
+      const dv  = document.getElementById(`dv-${id}`).value.trim().toUpperCase();
+      const qty = parseInt(document.getElementById(`qty-${id}`).value) || 1;
+      if (dv) items.push({ dv_number: dv, quantity: qty });
+    });
+    return items;
+  }
+
+  async function submitLookup() {
+    const items = getItems();
+    document.getElementById("error-block").style.display = "none";
+    document.getElementById("results").style.display = "none";
+    if (!items.length) { showErrors(["Enter at least one DV number."]); return; }
+
+    document.getElementById("spinner").style.display = "block";
+    document.getElementById("submit-btn").disabled = true;
+
+    try {
+      const res  = await fetch("/lookup", { method: "POST", headers: {"Content-Type":"application/json"}, body: JSON.stringify({items}) });
+      const data = await res.json();
+      document.getElementById("spinner").style.display = "none";
+      document.getElementById("submit-btn").disabled = false;
+      if (data.error)         { showErrors([data.error]); return; }
+      if (data.errors?.length) showErrors(data.errors);
+      if (data.results?.length) renderResults(data.results);
+    } catch(e) {
+      document.getElementById("spinner").style.display = "none";
+      document.getElementById("submit-btn").disabled = false;
+      showErrors(["Could not reach server."]);
+    }
+  }
+
+  function showErrors(errs) {
+    document.getElementById("error-lines").innerHTML = errs.map(e => `<div class="error-line">⚠ ${e}</div>`).join("");
+    document.getElementById("error-block").style.display = "block";
+  }
+
+  function renderResults(results) {
+    resolvedItems = results;
+    const list = document.getElementById("links-list");
+    list.innerHTML = "";
+    results.forEach(item => {
+      const rounded = item.units_received > item.qty_wanted;
+      const div = document.createElement("div");
+      div.className = "result-item";
+      div.innerHTML = `
+        <div class="result-dv">${item.dv_number}${rounded ? `<span class="tag tag-rounded">rounded up</span>` : ""}</div>
+        <div class="result-detail">
+          McMaster: <span>${item.mcmaster_part}</span> &nbsp;·&nbsp;
+          Pack: <span>${item.pack_size}</span> &nbsp;·&nbsp;
+          Ordering: <span>${item.packs_to_order} pack${item.packs_to_order!==1?"s":""}</span>
+          (${item.units_received} units)
+        </div>
+      `;
+      list.appendChild(div);
+    });
+    document.getElementById("results").style.display = "block";
+    document.getElementById("results").scrollIntoView({ behavior: "smooth" });
+  }
+
+  function sendToExtension() {
+    // Post a message the extension content script listens for
+    window.postMessage({ type: "MCMASTER_FILL_ORDER", items: resolvedItems }, "*");
+  }
+</script>
+</body>
+</html>
